@@ -4,6 +4,17 @@ A small IT support workspace built with **HTML, CSS, vanilla JavaScript, Node.js
 
 This is a **portfolio / learning project**, not a production IT service desk. All people, incidents and serial numbers in the sample dataset are fictional. It should not be deployed for real employee data without a fuller security and privacy review.
 
+## Application Screenshots
+
+### IT Support Dashboard
+![ServicePilot Dashboard](docs/screenshots/dashboard.png)
+
+### Support Ticket Management
+![ServicePilot Support Tickets](docs/screenshots/tickets.png)
+
+### Asset Inventory
+![ServicePilot Asset Inventory](docs/screenshots/assets.png)
+
 ## What works
 
 - Email/password sign-in, password hashes (scrypt), server-side sessions, sign-out
