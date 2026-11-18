@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#132237">
+  <title>ServicePilot | IT Support Workspace</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <section id="login-screen" class="login-screen" aria-label="Sign in">
+    <div class="login-card">
+      <div class="brand brand-login"><span class="brand-icon">S</span><span>ServicePilot<small>IT SUPPORT WORKSPACE</small></span></div>
+      <div class="login-divider"></div>
+      <div class="eyebrow">WELCOME BACK</div>
+      <h1>Sign in to your workspace</h1>
+      <p class="muted">Manage support requests and keep track of equipment in one place.</p>
+      <form id="login-form" class="login-form">
+        <label>Email address<input type="email" name="email" autocomplete="username" required placeholder="you@company.com"></label>
+        <label>Password<input type="password" name="password" autocomplete="current-password" required placeholder="Enter your password"></label>
+        <p id="login-error" class="field-error" role="alert" hidden></p>
+        <button type="submit" class="btn primary full-width">Sign in</button>
+      </form>
+      <div class="login-info">Local portfolio application. Use the account you created in the setup instructions.</div>
+    </div>
+    <div class="login-side"><div class="eyebrow">SERVICEPILOT</div><h2>Support people.<br>Track equipment.<br>Stay organized.</h2><p>A practical service desk system for a small IT team.</p><div class="login-preview">01 / Tickets &nbsp;&nbsp; 02 / Inventory &nbsp;&nbsp; 03 / Activity</div></div>
+  </section>
+
+  <div class="app-shell" id="app-shell" hidden>
+    <aside class="sidebar" aria-label="Main navigation">
+      <a class="brand" href="#dashboard"><span class="brand-icon">S</span><span>ServicePilot<small>IT OPERATIONS</small></span></a>
+      <p class="sidebar-label">WORKSPACE</p>
+      <nav class="side-nav">
+        <button type="button" class="nav-link active" data-section="dashboard"><span>▦</span> Dashboard</button>
+        <button type="button" class="nav-link" data-section="tickets"><span>☷</span> Support Tickets</button>
+        <button type="button" class="nav-link" data-section="assets"><span>▤</span> Asset Inventory</button>
+      </nav>
+      <div class="sidebar-help"><strong>Practice environment</strong><p>Use fictional tickets and asset records. Do not enter real employee data.</p></div>
+      <div class="sidebar-footer"><div class="avatar" id="user-initials">IT</div><div><strong id="user-name">Signed in</strong><small id="user-role">Technician</small></div></div>
+    </aside>
+
+    <div class="main-area">
+      <header class="topbar"><div class="breadcrumbs">Workspace <span>/</span> <strong id="crumb">Dashboard</strong></div><div class="top-right"><span class="status-dot"></span> <span class="connection-copy">Connected to MySQL</span> <button type="button" id="logout" class="logout">Sign out</button></div></header>
+      <main class="content">
+        <div id="banner" role="status" aria-live="polite" hidden></div>
+        <section id="dashboard-view" class="view active" aria-label="Dashboard">
+          <div class="page-heading"><div><div class="eyebrow">OVERVIEW</div><h1>IT Support Dashboard</h1><p>What's happening across your help desk today.</p></div><button class="btn primary" type="button" data-new-ticket>+ New ticket</button></div>
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-heading">All tickets <span class="stat-icon purple">☷</span></div><strong id="stat-total">—</strong><small>Requests on record</small></div>
+            <div class="stat-card"><div class="stat-heading">Open tickets <span class="stat-icon orange">◷</span></div><strong id="stat-open">—</strong><small>Waiting for action</small></div>
+            <div class="stat-card"><div class="stat-heading">High priority <span class="stat-icon red">!</span></div><strong id="stat-urgent">—</strong><small>Unresolved high / critical</small></div>
+            <div class="stat-card"><div class="stat-heading">Active assets <span class="stat-icon blue">▤</span></div><strong id="stat-assets">—</strong><small>Devices in service</small></div>
+          </div>
+          <div class="dashboard-grid">
+            <section class="panel"><div class="panel-heading"><div><h2>Recent requests</h2><p>The five most recent tickets</p></div><button type="button" class="text-btn" data-goto="tickets">View all →</button></div><div class="table-scroller"><table><thead><tr><th>Ticket</th><th>Priority</th><th>Status</th></tr></thead><tbody id="recent-tickets"></tbody></table></div></section>
+            <section class="panel summary-panel"><div class="panel-heading"><div><h2>Resolution overview</h2><p>All support requests</p></div></div><div class="donut-wrap"><div class="donut" id="donut"><div class="donut-hole"><strong id="resolution-rate">0%</strong><small>resolved</small></div></div></div><div class="legend"><div><span class="legend-dot green-bg"></span> Resolved <strong id="legend-resolved">0</strong></div><div><span class="legend-dot orange-bg"></span> In progress <strong id="legend-progress">0</strong></div><div><span class="legend-dot violet-bg"></span> Open <strong id="legend-open">0</strong></div></div></section>
+          </div>
+          <div class="tip"><div class="tip-icon">i</div><div><strong>How this system works</strong><p>Create a support request, link it to a device, assign a technician, add troubleshooting notes, then mark it resolved. Every change is saved to MySQL.</p></div></div>
+        </section>
+
+        <section id="tickets-view" class="view" aria-label="Support tickets">
+          <div class="page-heading"><div><div class="eyebrow">REQUEST MANAGEMENT</div><h1>Support tickets</h1><p>Find issues, assign work, and record resolutions.</p></div><button class="btn primary" type="button" data-new-ticket>+ New ticket</button></div>
+          <div class="panel"><div class="toolbar"><label class="search"><span>⌕</span><input id="ticket-search" type="search" placeholder="Search title, name or ticket ID" aria-label="Search tickets"></label><div class="toolbar-right"><select id="ticket-filter" aria-label="Filter ticket status"><option value="all">All statuses</option><option>Open</option><option>In Progress</option><option>Resolved</option></select><button type="button" class="btn secondary" id="export-tickets">Export CSV</button></div></div><div class="table-scroller"><table><thead><tr><th>Ticket / ID</th><th>Requester</th><th>Assigned to</th><th>Priority</th><th>Status</th><th></th></tr></thead><tbody id="tickets-table"></tbody></table></div><div class="table-note" id="ticket-count"></div></div>
+        </section>
+
+        <section id="assets-view" class="view" aria-label="Asset inventory">
+          <div class="page-heading"><div><div class="eyebrow">EQUIPMENT MANAGEMENT</div><h1>Asset inventory</h1><p>Keep a simple record of devices, locations, and assignments.</p></div><button class="btn primary" type="button" id="new-asset">+ Add asset</button></div>
+          <div class="panel"><div class="toolbar"><label class="search"><span>⌕</span><input id="asset-search" type="search" placeholder="Search device, tag or assignee" aria-label="Search assets"></label><div class="toolbar-right"><select id="asset-filter" aria-label="Filter asset status"><option value="all">All statuses</option><option>Active</option><option>Maintenance</option><option>Retired</option></select><button type="button" class="btn secondary" id="export-assets">Export CSV</button></div></div><div class="table-scroller"><table><thead><tr><th>Device / Tag</th><th>Type</th><th>Assigned to</th><th>Location</th><th>Status</th><th></th></tr></thead><tbody id="assets-table"></tbody></table></div><div class="table-note" id="asset-count"></div></div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <dialog id="ticket-create-dialog" aria-labelledby="ticket-create-title">
+    <form id="ticket-form" class="dialog-form"><div class="dialog-header"><div><div class="eyebrow">NEW REQUEST</div><h2 id="ticket-create-title">Create support ticket</h2></div><button class="close-dialog" type="button" data-close="ticket-create-dialog" aria-label="Close">×</button></div>
+      <label>Issue title<input name="title" maxlength="160" required placeholder="e.g. Laptop can't connect to Wi-Fi"></label>
+      <div class="form-cols"><label>Requester<input name="requester" maxlength="100" required placeholder="Jordan Lee"></label><label>Requester email (optional)<input type="email" maxlength="160" name="requester_email" placeholder="jordan@example.test"></label></div>
+      <div class="form-cols"><label>Category<select name="category"><option>Hardware</option><option>Software</option><option>Network</option><option>Access</option><option>Other</option></select></label><label>Priority<select name="priority"><option>Low</option><option selected>Medium</option><option>High</option><option>Critical</option></select></label></div>
+      <label>Related equipment (optional)<select name="asset_id" id="create-asset-select"><option value="">Not linked</option></select></label>
+      <label>Description<textarea name="description" maxlength="3000" required placeholder="What happened? What has already been tried?"></textarea></label>
+      <div class="dialog-actions"><button class="btn secondary" type="button" data-close="ticket-create-dialog">Cancel</button><button class="btn primary" type="submit">Create ticket</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="ticket-detail-dialog" class="wide-dialog" aria-labelledby="ticket-detail-title">
+    <div class="dialog-form"><div class="dialog-header"><div><div id="detail-id" class="eyebrow"></div><h2 id="ticket-detail-title"></h2></div><button class="close-dialog" type="button" data-close="ticket-detail-dialog" aria-label="Close">×</button></div>
+      <p id="detail-description" class="detail-description"></p>
+      <div class="detail-meta" id="detail-meta"></div>
+      <div class="form-cols"><label>Status<select id="detail-status" data-ticket-field="status"><option>Open</option><option>In Progress</option><option>Resolved</option></select></label><label>Priority<select id="detail-priority" data-ticket-field="priority"><option>Low</option><option>Medium</option><option>High</option><option>Critical</option></select></label></div>
+      <div class="form-cols"><label>Assigned technician<select id="detail-assignee" data-ticket-field="assignee_id"></select></label><label>Linked asset<select id="detail-asset" data-ticket-field="asset_id"></select></label></div>
+      <div class="dialog-divider"></div><h3>Activity & troubleshooting notes</h3><p class="muted tiny">Record what was tested and how the issue was resolved.</p>
+      <ol id="activity-list" class="activity-list"></ol>
+      <form id="note-form" class="note-form"><label>Add an internal note<textarea name="note" maxlength="500" required minlength="3" placeholder="e.g. Checked network adapter settings and renewed IP address"></textarea></label><button class="btn primary" type="submit">Save note</button></form>
+    </div>
+  </dialog>
+
+  <dialog id="asset-dialog" aria-labelledby="asset-dialog-title">
+    <form id="asset-form" class="dialog-form"><div class="dialog-header"><div><div class="eyebrow">INVENTORY RECORD</div><h2 id="asset-dialog-title">Add equipment</h2></div><button class="close-dialog" type="button" data-close="asset-dialog" aria-label="Close">×</button></div>
+      <label>Asset tag<input name="asset_tag" maxlength="40" pattern="[A-Za-z0-9_-]{3,40}" required placeholder="LAP-101"></label>
+      <label>Device name<input name="device_name" maxlength="120" required placeholder="Dell Latitude 5440"></label>
+      <div class="form-cols"><label>Device type<select name="asset_type"><option>Laptop</option><option>Desktop</option><option>Monitor</option><option>Printer</option><option>Phone</option><option>Other</option></select></label><label>Status<select name="status"><option>Active</option><option>Maintenance</option><option>Retired</option></select></label></div>
+      <div class="form-cols"><label>Assigned to<input name="assigned_to" maxlength="100" placeholder="Unassigned"></label><label>Location<input name="location" maxlength="120" placeholder="Main office"></label></div>
+      <label>Serial number (optional)<input name="serial_number" maxlength="100" placeholder="Device serial / demo value"></label>
+      <div class="dialog-actions"><button class="btn secondary" type="button" data-close="asset-dialog">Cancel</button><button class="btn primary" type="submit" id="asset-save">Save asset</button></div>
+    </form>
+  </dialog>
+</body>
+</html>
