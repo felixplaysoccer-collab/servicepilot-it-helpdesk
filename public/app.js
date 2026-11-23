@@ -34,13 +34,47 @@ function showLogin() {
   state.user=null;$('#app-shell').hidden=true;$('#login-screen').hidden=false;
   $$('dialog[open]').forEach(d=>d.close());
 }
+
 function showApp(user) {
-  state.user=user;
-  $('#login-screen').hidden=true;$('#app-shell').hidden=false;
-  $('#user-name').textContent=user.name;$('#user-role').textContent=user.role==='admin'?'Administrator':'Technician';
-  $('#user-initials').textContent=user.name.split(' ').map(s=>s[0]).slice(0,2).join('').toUpperCase();
-  $('#new-asset').hidden=user.role!=='admin';
+  state.user = user;
+
+  $('#login-screen').hidden = true;
+  $('#app-shell').hidden = false;
+
+  const isAdmin = user.role === 'admin';
+  const isViewer = user.role === 'viewer';
+
+  $('#user-name').textContent = user.name;
+  $('#user-role').textContent = isAdmin
+    ? 'Administrator'
+    : isViewer
+      ? 'Read-only Viewer'
+      : 'Technician';
+
+  $('#user-initials').textContent = user.name
+    .split(' ')
+    .map(s => s[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
+
+  // Only administrators can add or edit equipment.
+  $('#new-asset').hidden = !isAdmin;
+
+  // Viewers cannot create support tickets.
+  $$('[data-new-ticket]').forEach(button => {
+    button.hidden = isViewer;
+  });
+
+  // Viewers can inspect ticket details but cannot change them.
+  $$('[data-ticket-field]').forEach(select => {
+    select.disabled = isViewer;
+  });
+
+  // Viewers can read existing notes but cannot add new ones.
+  $('#note-form').style.display = isViewer ? 'none' : '';
 }
+
 function view(section) {
   const labels={dashboard:'Dashboard',tickets:'Support Tickets',assets:'Asset Inventory'};
   if(!labels[section])return;

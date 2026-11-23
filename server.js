@@ -6,6 +6,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { hashToken, newToken, verifyPassword, sessionCookie, expireCookie } from './lib/security.js';
 import { id, text, choice, optionalId, checkTicket, checkAsset, priorities, ticketStatuses, assetStatuses } from './lib/validation.js';
+import { canManageTickets, canManageAssets } from './lib/permissions.js';
+
 
 const app = express();
 const port = Number(process.env.PORT || 3000);
@@ -50,7 +52,17 @@ async function auth(req,res,next) {
     req.user=rows[0];req.token=token;next();
   } catch(err){ next(err); }
 }
-const admin = (req,res,next) => req.user.role==='admin' ? next() : fail(res,'Only administrators can change inventory.',403);
+
+const admin = (req, res, next) =>
+  canManageAssets(req.user.role)
+    ? next()
+    : fail(res, 'Only administrators can change inventory.', 403);
+
+const staff = (req, res, next) =>
+  canManageTickets(req.user.role)
+    ? next()
+    : fail(res, 'Read-only accounts cannot modify tickets.', 403);
+
 
 app.get('/api/health',async(_req,res)=>{
   try {await db.query('SELECT 1');res.json({ok:true,database:'connected'});}
@@ -116,7 +128,7 @@ app.get('/api/tickets/:id/activity',auth,async(req,res,next)=>{
       WHERE a.ticket_id=? ORDER BY a.created_at DESC,a.id DESC LIMIT 100`,[req.params.id]);res.json(events);
   }catch(err){next(err);}
 });
-app.post('/api/tickets',auth,async(req,res,next)=>{
+app.post('/api/tickets',auth,staff,async(req,res,next)=>{
   const parsed=checkTicket(req.body);if(parsed.error)return fail(res,parsed.error);
   const t=parsed.value;const connection=await db.getConnection();
   try{
@@ -129,7 +141,7 @@ app.post('/api/tickets',auth,async(req,res,next)=>{
     await connection.commit();res.status(201).json({id:r.insertId,message:'Ticket created.'});
   }catch(err){await connection.rollback();next(err);}finally{connection.release();}
 });
-app.patch('/api/tickets/:id',auth,async(req,res,next)=>{
+app.patch('/api/tickets/:id',auth,staff,async(req,res,next)=>{
   if(!id(req.params.id))return fail(res,'Invalid ticket number.');
   const allowed=['status','priority','assignee_id','asset_id'];const fields=Object.keys(req.body || {});
   if(fields.length!==1 || !allowed.includes(fields[0]))return fail(res,'Update one ticket field at a time.');
@@ -155,7 +167,7 @@ app.patch('/api/tickets/:id',auth,async(req,res,next)=>{
     await connection.commit();res.json({message:'Ticket updated.'});
   }catch(err){await connection.rollback();next(err);}finally{connection.release();}
 });
-app.post('/api/tickets/:id/notes',auth,async(req,res,next)=>{
+app.post('/api/tickets/:id/notes',auth,staff,async(req,res,next)=>{
   if(!id(req.params.id))return fail(res,'Invalid ticket number.');
   const note=text(req.body?.note,500);
   if(note.length<3)return fail(res,'Enter a troubleshooting note of at least 3 characters.');

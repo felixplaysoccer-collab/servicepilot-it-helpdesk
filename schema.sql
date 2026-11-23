@@ -8,7 +8,7 @@ CREATE TABLE users (
   name VARCHAR(100) NOT NULL,
   email VARCHAR(160) NOT NULL UNIQUE,
   password_hash VARCHAR(200) NOT NULL,
-  role ENUM('admin','technician') NOT NULL DEFAULT 'technician',
+  role ENUM('admin','technician','viewer') NOT NULL DEFAULT 'technician',
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

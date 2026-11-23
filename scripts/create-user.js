@@ -9,9 +9,9 @@ let db;
 try {
   const name = (await rl.question('Name: ')).trim();
   const email = (await rl.question('Email: ')).trim().toLowerCase();
-  const role = (await rl.question('Role (admin or technician): ')).trim().toLowerCase();
+  const role = (await rl.question('Role (admin, technician, or viewer):')).trim().toLowerCase();
   const password = await rl.question('Password (12+ characters; input will be visible): ');
-  if (!name || name.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !['admin','technician'].includes(role)) {
+  if (!name || name.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !['admin','technician','viewer'].includes(role)) {
     throw new Error('Invalid name, email, or role.');
   }
   const passwordHash = await hashPassword(password);
