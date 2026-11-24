@@ -68,3 +68,12 @@ CREATE TABLE ticket_activity (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
   INDEX idx_ticket_activity (ticket_id, created_at)
 );
+
+
+-- Track failed login attempts across application restarts.
+CREATE TABLE IF NOT EXISTS login_attempts (
+    key_hash CHAR(64) PRIMARY KEY,
+    attempt_count INT UNSIGNED NOT NULL DEFAULT 0,
+    window_started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+

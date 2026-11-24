@@ -70,22 +70,95 @@ app.get('/api/health',async(_req,res)=>{
 });
 
 // Small in-memory login throttle for LOCAL use; production should use shared rate limiting.
-const failures=new Map();
-app.post('/api/login',async(req,res,next)=>{
-  const email = text(req.body?.email,160).toLowerCase();const password=req.body?.password;
-  const key=`${req.ip}:${email}`;const now=Date.now();const previous=failures.get(key);
-  if(previous?.until>now && previous.count>=5) return fail(res,'Too many attempts. Try again in 15 minutes.',429);
-  if(!email || typeof password!=='string' || password.length>128) return fail(res,'Invalid sign-in details.');
+
+const LOGIN_LIMIT = 5;
+
+app.post('/api/login', async (req, res, next) => {
+  const email = text(req.body?.email, 160).toLowerCase();
+  const password = req.body?.password;
+
+  if (!email || typeof password !== 'string' || password.length > 128) {
+    return fail(res, 'Invalid sign-in details.');
+  }
+
+  // Hash the email so the tracking table doesn't store email addresses.
+  const key = hashToken(`login:${email}`);
+
   try {
-    const [rows]=await db.execute('SELECT id,name,email,role,password_hash FROM users WHERE email=? LIMIT 1',[email]);
-    const good=rows.length && await verifyPassword(password,rows[0].password_hash);
-    if(!good){const count=previous?.until>now ? previous.count+1 : 1;failures.set(key,{count,until:now+900000});return fail(res,'Incorrect email or password.',401);}
-    failures.delete(key);
-    const token=newToken();await db.execute('INSERT INTO sessions (token_hash,user_id,expires_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 8 HOUR))',[hashToken(token),rows[0].id]);
-    res.set('Set-Cookie',sessionCookie(token,secureCookies));
-    res.json({user:{id:rows[0].id,name:rows[0].name,email:rows[0].email,role:rows[0].role}});
-  } catch(err){next(err);}
+    // Check failed attempts within the last 15 minutes.
+    const [attempts] = await db.execute(
+      `SELECT attempt_count
+       FROM login_attempts
+       WHERE key_hash = ?
+         AND window_started_at > NOW() - INTERVAL 15 MINUTE`,
+      [key]
+    );
+
+    if (Number(attempts[0]?.attempt_count || 0) >= LOGIN_LIMIT) {
+      return fail(res, 'Too many attempts. Try again in 15 minutes.', 429);
+    }
+
+    const [rows] = await db.execute(
+      'SELECT id, name, email, role, password_hash FROM users WHERE email = ? LIMIT 1',
+      [email]
+    );
+
+    const validPassword =
+      rows.length > 0 &&
+      await verifyPassword(password, rows[0].password_hash);
+
+    if (!validPassword) {
+      // Record the failed attempt in MySQL.
+      await db.execute(
+        `INSERT INTO login_attempts
+           (key_hash, attempt_count, window_started_at)
+         VALUES (?, 1, NOW())
+         ON DUPLICATE KEY UPDATE
+           attempt_count = IF(
+             window_started_at <= NOW() - INTERVAL 15 MINUTE,
+             1,
+             attempt_count + 1
+           ),
+           window_started_at = IF(
+             window_started_at <= NOW() - INTERVAL 15 MINUTE,
+             NOW(),
+             window_started_at
+           )`,
+        [key]
+      );
+
+      return fail(res, 'Incorrect email or password.', 401);
+    }
+
+    // Successful login: clear failed attempts.
+    await db.execute(
+      'DELETE FROM login_attempts WHERE key_hash = ?',
+      [key]
+    );
+
+    const token = newToken();
+
+    await db.execute(
+      `INSERT INTO sessions (token_hash, user_id, expires_at)
+       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 8 HOUR))`,
+      [hashToken(token), rows[0].id]
+    );
+
+    res.set('Set-Cookie', sessionCookie(token, secureCookies));
+
+    res.json({
+      user: {
+        id: rows[0].id,
+        name: rows[0].name,
+        email: rows[0].email,
+        role: rows[0].role
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
 });
+
 app.post('/api/logout',auth,async(req,res,next)=>{
   try{await db.execute('DELETE FROM sessions WHERE token_hash=?',[hashToken(req.token)]);
     res.set('Set-Cookie',expireCookie(secureCookies));res.json({ok:true});}
