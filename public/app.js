@@ -188,6 +188,30 @@ $('#login-form').addEventListener('submit',async e=>{
   }catch(err){$('#login-error').textContent=err.message;$('#login-error').hidden=false;}
   finally{button.disabled=false;}
 });
+
+$('#demo-login').addEventListener('click', async () => {
+  const button = $('#demo-login');
+  button.disabled = true;
+  button.textContent = 'Opening demo...';
+  $('#login-error').hidden = true;
+
+  try {
+    const { user } = await api('/demo-login', {
+      method: 'POST'
+    });
+
+    showApp(user);
+    await reload();
+    view('dashboard');
+  } catch (err) {
+    $('#login-error').textContent = err.message;
+    $('#login-error').hidden = false;
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Explore Live Demo';
+  }
+});
+
 $('#logout').addEventListener('click',async()=>{try{await api('/logout',{method:'POST'});}catch{}showLogin();});
 $$('[data-section]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.section)));
 $$('[data-goto]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.goto)));

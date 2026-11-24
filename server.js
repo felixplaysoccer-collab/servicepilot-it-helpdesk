@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { hashToken, newToken, verifyPassword, sessionCookie, expireCookie } from './lib/security.js';
 import { id, text, choice, optionalId, checkTicket, checkAsset, priorities, ticketStatuses, assetStatuses } from './lib/validation.js';
 import { canManageTickets, canManageAssets } from './lib/permissions.js';
+import { isIP } from 'node:net';
 
 
 const app = express();
@@ -154,6 +155,84 @@ app.post('/api/login', async (req, res, next) => {
         role: rows[0].role
       }
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.post('/api/demo-login', async (req, res, next) => {
+  // Public demo access is disabled unless explicitly enabled.
+  if (process.env.ENABLE_PUBLIC_DEMO !== 'true') {
+    return fail(res, 'Demo access is not enabled.', 404);
+  }
+
+  try {
+
+    // Limit public demo sessions to 30 requests per 15 minutes.
+    
+const clientIP = process.env.NODE_ENV === 'production'
+  ? req.get('X-Real-IP')
+  : req.ip;
+
+if (!isIP(clientIP ?? '')) {
+  return fail(res, 'Demo access is temporarily unavailable.', 503);
+}
+
+const demoKey = hashToken(`demo:${clientIP}`);
+
+
+    await db.execute(
+      `INSERT INTO login_attempts
+         (key_hash, attempt_count, window_started_at)
+       VALUES (?, 1, NOW())
+       ON DUPLICATE KEY UPDATE
+         attempt_count = IF(
+           window_started_at <= NOW() - INTERVAL 15 MINUTE,
+           1,
+           attempt_count + 1
+         ),
+         window_started_at = IF(
+           window_started_at <= NOW() - INTERVAL 15 MINUTE,
+           NOW(),
+           window_started_at
+         )`,
+      [demoKey]
+    );
+
+    const [[demoAttempts]] = await db.execute(
+      'SELECT attempt_count FROM login_attempts WHERE key_hash = ?',
+      [demoKey]
+    );
+
+    if (demoAttempts.attempt_count > 30) {
+      return fail(res, 'Demo is temporarily busy. Please try again later.', 429);
+    }
+
+    // Only the designated read-only viewer can use demo access.
+    const [rows] = await db.execute(
+      `SELECT id, name, email, role
+       FROM users
+       WHERE email = ? AND role = 'viewer'
+       LIMIT 1`,
+      ['viewer@servicepilot.test']
+    );
+
+    if (!rows.length) {
+      return fail(res, 'Demo account is unavailable.', 503);
+    }
+
+    const user = rows[0];
+    const token = newToken();
+
+    // Create a server-side session, just like a normal login.
+    await db.execute(
+      `INSERT INTO sessions (token_hash, user_id, expires_at)
+       VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 30 minute))`,
+      [hashToken(token), user.id]
+    );
+
+    res.set('Set-Cookie', sessionCookie(token, secureCookies, 1800));
+    res.json({ user });
   } catch (err) {
     next(err);
   }

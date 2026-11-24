@@ -16,16 +16,31 @@
       <div class="eyebrow">WELCOME BACK</div>
       <h1>Sign in to your workspace</h1>
       <p class="muted">Manage support requests and keep track of equipment in one place.</p>
-      <form id="login-form" class="login-form">
-        <label>Email address<input type="email" name="email" autocomplete="username" required placeholder="you@company.com"></label>
-        <label>Password<input type="password" name="password" autocomplete="current-password" required placeholder="Enter your password"></label>
-        <p id="login-error" class="field-error" role="alert" hidden></p>
-        <button type="submit" class="btn primary full-width">Sign in</button>
-      </form>
-      <
+
+<form id="login-form" class="login-form">
+  <label>
+    Email address
+    <input type="email" name="email" autocomplete="username" required placeholder="you@company.com">
+  </label>
+
+  <label>
+    Password
+    <input type="password" name="password" autocomplete="current-password" required placeholder="Enter your password">
+  </label>
+
+  <p id="login-error" class="field-error" role="alert" hidden></p>
+
+  <button type="submit" class="btn primary full-width">Sign in</button>
+</form>
+
+<button type="button" id="demo-login" class="btn secondary full-width">
+  Explore Live Demo
+</button>
+
 <div class="login-info">
-  ServicePilot is a portfolio demonstration built with Node.js, Express,
-  and MySQL. All records are fictional. Viewer accounts have read-only access.
+  ServicePilot is a portfolio demonstration built with Node.js,
+  Express, and MySQL. All records are fictional.
+  Viewer accounts have read-only access.
 </div>
 
     </div>
