@@ -4,6 +4,34 @@ A small IT support workspace built with **HTML, CSS, vanilla JavaScript, Node.js
 
 This is a **portfolio / learning project**, not a production IT service desk. All people, incidents and serial numbers in the sample dataset are fictional. It should not be deployed for real employee data without a fuller security and privacy review.
 
+
+## Live Application
+
+**Live Website:** https://servicepilot-it-helpdesk-production.up.railway.app
+
+**Deployment:** Railway  
+**Database:** MySQL  
+**Backend:** Node.js and Express  
+**Frontend:** HTML, CSS, and JavaScript
+
+ServicePilot is a full-stack IT help desk and asset management
+application deployed on Railway with a cloud-hosted MySQL database.
+
+### Features
+
+- Email/password authentication with hashed passwords and server-side sessions
+- Administrator, technician, and read-only viewer roles
+- IT support ticket creation and management
+- Technician assignments and troubleshooting notes
+- Equipment inventory tracking
+- Dashboard statistics and ticket resolution tracking
+- Persistent MySQL-based login rate limiting
+
+**Demo Notice:** This is a portfolio project using fictional
+records. Authentication is required to access the application.
+Public demonstration credentials are not currently provided.
+
+
 ## Application Screenshots
 
 ### IT Support Dashboard
@@ -106,10 +134,10 @@ docs/                    design decisions and test checklist
 
 ## Feature boundaries and security notes
 
-- Intended for **local demonstration**. There is no password reset, self-service signup, email notification, audit exports, file attachment feature, or multi-tenant access separation.
+- Deployed online for portfolio demonstration using fictional data; not intended for real organizational use. There is no password reset, self-service signup, email notification, audit exports, file attachment feature, or multi-tenant access separation.
 - Do not publish `.env`, real passwords, personal email lists, corporate inventory, or real tickets.
 - Session tokens are random, hashed in the database, in HttpOnly SameSite cookies; `Secure` cookies are enabled in `NODE_ENV=production`. Production hosting still requires **HTTPS**, safe reverse-proxy configuration, backups, strong secrets and permissions, rate limiting, monitoring, and security testing.
-- The login throttle is per-process memory. It is **not sufficient for a public multi-server deployment**. Cross-site modifications use a custom header, origin checks, and SameSite cookies; a public deployment deserves a fuller security review.
+- Failed login attempts are tracked in MySQL, allowing the limit to persist across application restarts. The current implementation limits attempts per email address within a 15-minute window. Additional protections against automated attacks and deliberate account lockouts are needed before using this application with real organizational data. It is **not sufficient for a public multi-server deployment**. Cross-site modifications use a custom header, origin checks, and SameSite cookies; a public deployment deserves a fuller security review.
 - Only admins can change asset inventory; both admins and technicians can manage the shared ticket queue. This models a **small internal IT team**, not external customers.
 - The basic API lists up to 500 records and the page filters them locally. Large real organizations need server-side pagination, indexing strategy, and search.
 
